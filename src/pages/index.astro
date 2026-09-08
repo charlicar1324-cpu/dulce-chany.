@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { supabase } from '../lib/supabase';
+
+// Consulta para obtener los productos activos desde Supabase
+const { data: productos, error } = await supabase
+  .from('productos')
+  .select('*')
+  .order('id');
+
+if (error) {
+  console.error('Error cargando productos:', error.message);
+}
+---
+
+<Layout title="Dulce CHANY | Repostería Artesanal">
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Encabezado con Botón a Registro de Ventas -->
+    <header class="flex flex-col sm:flex-row justify-between items-center pb-8 border-b border-gray-100 gap-4">
+      <div>
+        <h1 class="text-4xl font-extrabold text-pink-600 tracking-tight">Dulce CHANY</h1>
+        <p class="text-gray-500 text-sm mt-1">Repostería Artesanal & Antojitos</p>
+      </div>
+
+      <!-- Botón de acceso directo al Panel de Ventas -->
+      <a 
+        href="/ventas" 
+        class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition duration-200"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <span>Registrar Ventas</span>
+      </a>
+    </header>
+
+    <!-- Catálogo de Productos -->
+    <section class="mt-10">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Nuestro Menú</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {productos && productos.map((producto) => (
+          <ProductCard 
+            id={String(producto.id)}
+            nombre={producto.nombre}
+            descripcion={producto.descripcion}
+            precio={producto.precio}
+            categoria={producto.categoria}
+            imagen={producto.imagen}
+            popular={producto.popular}
+            disponible={producto.disponible}
+          />
+        ))}
+      </div>
+    </section>
+  </main>
+</Layout>

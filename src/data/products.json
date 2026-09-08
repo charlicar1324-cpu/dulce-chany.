@@ -1,0 +1,48 @@
+[
+  {
+    "id": "1",
+    "nombre": "MORENITAS",
+    "descripcion": "Base de galletas con relleno de helado de su preferencia, con un glaseado de chocolate y almendra.",
+    "precio": 30.00,
+    "categoria": "postre",
+    "imagen": "/images/morenitas.jpg",
+    "popular": true
+  },
+  {
+    "id": "2",
+    "nombre": "ROll PIZZA",
+    "descripcion": "Es un rol echo en como si fuera una pizza, con peproni, queso oaxaca, queso motsarela, manchego ",
+    "precio": 70.00,
+    "categoria": "Comida",
+    "imagen": "/images/pizza.jpg",
+    "popular": true
+  },
+  {
+    "id": "3",
+    "nombre": "SALCHICHAS ENDIABLADAS",
+    "descripcion": "Son 5 salchichas cocidas bañdas en salsa 'LA DIABLA (Cacera) ' con limos y salsas de su preferencia acompañadas con papas de su agrado",
+    "precio": 120.00,
+    "categoria": "Comida",
+    "imagen": "/images/salchichas.jpg",
+    "popular": false
+  },
+  {
+    "id": "4",
+    "nombre": "FLAN",
+    "descripcion": " Flan prepaerado de forma cacera",
+    "precio": 50.00,
+    "categoria": "postre",
+    "imagen": "/images/FLAN.jpg",
+    "popular": false
+  },
+
+   {
+    "id": "5",
+    "nombre": "BUÑUELOS",
+    "descripcion": " Buñuelos de aire, llevan azucar y canela ",
+    "precio": 7.00,
+    "categoria": "postre",
+    "imagen": "/images/buñuelos.jpg",
+    "popular": false
+  }
+]
