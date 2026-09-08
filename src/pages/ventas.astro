@@ -2,188 +2,186 @@
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
-// 1. Obtenemos los productos activos desde Supabase
-const { data: productos, error } = await supabase
-  .from('productos')
-  .select('*')
-  .eq('disponible', true)
-  .order('nombre');
+// Número de WhatsApp del negocio (sin el signo +)
+const TELEFONO_WHATSAPP = "7293610746"; // ¡Cambia este número por el tuyo!
+
+const { data: productos } = await supabase.from('productos').select('*');
 ---
 
-<Layout title="Panel de Ventas | Dulce CHANY">
-  <main class="max-w-4xl mx-auto p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-800">Registrar Venta</h1>
-      <a href="/" class="text-sm text-pink-600 hover:underline">← Volver al Menú</a>
+<Layout title="Registro de Compra | Dulce CHANY">
+  <!-- Carga de CSS para el Mapa Interactivo -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-3xl font-bold text-gray-800">Registro de Compra</h1>
+      <a href="/" class="text-pink-600 hover:text-pink-800 text-sm font-semibold flex items-center gap-1">
+        ← Volver al Menú
+      </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Columna Izquierda: Selección de Productos -->
-      <div class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
-        <h2 class="text-lg font-semibold mb-4 text-gray-700">Productos Disponibles</h2>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {productos && productos.map((prod) => (
-            <button
-              class="btn-agregar flex justify-between items-center p-3 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg text-left transition"
-              data-id={prod.id}
-              data-nombre={prod.nombre}
-              data-precio={prod.precio}
-            >
-              <div>
-                <p class="font-medium text-gray-800">{prod.nombre}</p>
-                <p class="text-xs text-gray-500">${prod.precio} MXN</p>
-              </div>
-              <span class="text-pink-600 font-bold text-lg">+</span>
-            </button>
+    <form id="form-compra" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col gap-5">
+      <!-- Selección de Producto -->
+      <div>
+        <label for="producto" class="block text-sm font-semibold text-gray-700 mb-1">Selecciona tu Postre / Antojito</label>
+        <select id="producto" name="producto" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none">
+          <option value="" disabled selected>-- Elige una opción --</option>
+          {productos?.map((p) => (
+            <option value={p.nombre} data-precio={p.precio}>
+              {p.nombre} - ${p.precio.toFixed(2)}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      <!-- Columna Derecha: Resumen y Cobro -->
-      <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100 flex flex-col justify-between">
+      <!-- Cantidad y Cliente -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <h2 class="text-lg font-semibold mb-4 text-gray-700">Resumen del Pedido</h2>
-          
-          <ul id="lista-carrito" class="divide-y divide-gray-100 mb-4 max-h-60 overflow-y-auto">
-            <li class="py-2 text-sm text-gray-400 italic text-center" id="carrito-vacio">No hay productos seleccionados</li>
-          </ul>
-
-          <div class="border-t pt-3 space-y-3">
-            <div class="flex justify-between font-bold text-xl text-gray-800">
-              <span>Total:</span>
-              <span id="texto-total">$0.00</span>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Método de Pago</label>
-              <select id="metodo-pago" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
-                <option value="Efectivo">Efectivo</option>
-                <option value="Transferencia">Transferencia</option>
-                <option value="Tarjeta">Tarjeta</option>
-              </select>
-            </div>
-          </div>
+          <label for="cantidad" class="block text-sm font-semibold text-gray-700 mb-1">Cantidad</label>
+          <input type="number" id="cantidad" name="cantidad" min="1" value="1" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none" />
         </div>
-
-        <button
-          id="btn-cobrar"
-          disabled
-          class="mt-6 w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-4 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Confirmar y Registrar Venta
-        </button>
+        <div>
+          <label for="cliente" class="block text-sm font-semibold text-gray-700 mb-1">Tu Nombre</label>
+          <input type="text" id="cliente" name="cliente" placeholder="Ej. Juan Pérez" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none" />
+        </div>
       </div>
-    </div>
+
+      <!-- Método de Entrega -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Método de Entrega</label>
+        <div class="grid grid-cols-2 gap-4">
+          <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-pink-50 border-gray-300 has-[:checked]:border-pink-600 has-[:checked]:bg-pink-50">
+            <input type="radio" name="tipo_entrega" value="Recoge el pedido" checked class="text-pink-600 focus:ring-pink-500" />
+            <span class="text-sm font-medium text-gray-800">Recoger en tienda</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-pink-50 border-gray-300 has-[:checked]:border-pink-600 has-[:checked]:bg-pink-50">
+            <input type="radio" name="tipo_entrega" value="Entrega a domicilio" class="text-pink-600 focus:ring-pink-500" />
+            <span class="text-sm font-medium text-gray-800">Entrega a domicilio</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Sección del Mapa (Oculta por defecto) -->
+      <div id="seccion-mapa" class="hidden flex-col gap-2">
+        <label class="block text-sm font-semibold text-gray-700">Selecciona tu ubicación en el mapa:</label>
+        <p class="text-xs text-gray-500">Mueve el mapa o haz clic donde quieras recibir tu pedido.</p>
+        <div id="map" class="w-full h-64 rounded-xl border border-gray-300 z-0"></div>
+        <input type="hidden" id="lat" name="lat" />
+        <input type="hidden" id="lng" name="lng" />
+      </div>
+
+      <!-- Observaciones / Notas -->
+      <div>
+        <label for="notas" class="block text-sm font-semibold text-gray-700 mb-1">Notas adicionales (opcional)</label>
+        <textarea id="notas" name="notas" rows="2" placeholder="Ej. Sin picante, o referencias de la casa..." class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none"></textarea>
+      </div>
+
+      <!-- Botón de Envío -->
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+        </svg>
+        <span>Confirmar y Enviar a WhatsApp</span>
+      </button>
+    </form>
   </main>
-</Layout>
 
-<script>
-  import { supabase } from '../lib/supabase';
+  <!-- Script para la Lógica del Mapa y WhatsApp -->
+  <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script is:inline>
+    let map, marker;
+    const defaultLat = 19.2925; // Coordenadas por defecto (puedes cambiarlas a tu ciudad)
+    const defaultLng = -99.6569;
 
-  // Definición del tipo explícito para evitar errores de TypeScript
-  interface ItemCarrito {
-    id: string;
-    nombre: string;
-    precio: number;
-    cantidad: number;
-  }
+    const radiosEntrega = document.querySelectorAll('input[name="tipo_entrega"]');
+    const seccionMapa = document.getElementById('seccion-mapa');
 
-  let carrito: ItemCarrito[] = [];
+    // Manejar visibilidad del mapa
+    radiosEntrega.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        if (e.target.value === 'Entrega a domicilio') {
+          seccionMapa.classList.remove('hidden');
+          seccionMapa.classList.add('flex');
+          if (!map) initMap();
+        } else {
+          seccionMapa.classList.add('hidden');
+          seccionMapa.classList.remove('flex');
+        }
+      });
+    });
 
-  const listaCarrito = document.getElementById('lista-carrito') as HTMLElement;
-  const carritoVacio = document.getElementById('carrito-vacio') as HTMLElement;
-  const textoTotal = document.getElementById('texto-total') as HTMLElement;
-  const btnCobrar = document.getElementById('btn-cobrar') as HTMLButtonElement;
-  const selectMetodo = document.getElementById('metodo-pago') as HTMLSelectElement;
+    function initMap() {
+      map = L.map('map').setView([defaultLat, defaultLng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
 
-  // Escuchar clics en los botones de agregar producto
-  document.querySelectorAll('.btn-agregar').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id') || '';
-      const nombre = btn.getAttribute('data-nombre') || '';
-      const precio = parseFloat(btn.getAttribute('data-precio') || '0');
+      marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+      
+      document.getElementById('lat').value = defaultLat;
+      document.getElementById('lng').value = defaultLng;
 
-      const existe = carrito.find((item: ItemCarrito) => item.id === id);
-      if (existe) {
-        existe.cantidad += 1;
-      } else {
-        carrito.push({ id, nombre, precio, cantidad: 1 });
+      // Intentar obtener la geolocalización real del cliente
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const { latitude, longitude } = pos.coords;
+          map.setView([latitude, longitude], 16);
+          marker.setLatLng([latitude, longitude]);
+          document.getElementById('lat').value = latitude;
+          document.getElementById('lng').value = longitude;
+        });
       }
 
-      actualizarVista();
-    });
-  });
+      // Actualizar coordenadas al mover el marcador o hacer clic
+      marker.on('dragend', function (e) {
+        const position = marker.getLatLng();
+        document.getElementById('lat').value = position.lat;
+        document.getElementById('lng').value = position.lng;
+      });
 
-  function actualizarVista() {
-    listaCarrito.innerHTML = '';
-
-    if (carrito.length === 0) {
-      listaCarrito.appendChild(carritoVacio);
-      btnCobrar.disabled = true;
-      textoTotal.textContent = '$0.00';
-      return;
+      map.on('click', function (e) {
+        marker.setLatLng(e.latlng);
+        document.getElementById('lat').value = e.latlng.lat;
+        document.getElementById('lng').value = e.latlng.lng;
+      });
     }
 
-    btnCobrar.disabled = false;
-    let total = 0;
+    // Procesar el envío del formulario
+    document.getElementById('form-compra').addEventListener('submit', function (e) {
+      e.preventDefault();
 
-    carrito.forEach((item: ItemCarrito) => {
-      const subtotal = item.precio * item.cantidad;
-      total += subtotal;
+      const productoSelect = document.getElementById('producto');
+      const producto = productoSelect.value;
+      const cantidad = document.getElementById('cantidad').value;
+      const cliente = document.getElementById('cliente').value;
+      const notas = document.getElementById('notas').value;
+      const tipoEntrega = document.querySelector('input[name="tipo_entrega"]:checked').value;
 
-      const li = document.createElement('li');
-      li.className = 'py-2 flex justify-between items-center text-sm';
-      li.innerHTML = `
-        <div>
-          <p class="font-medium text-gray-800">${item.nombre}</p>
-          <p class="text-xs text-gray-500">${item.cantidad} x $${item.precio}</p>
-        </div>
-        <span class="font-semibold text-gray-700">$${subtotal.toFixed(2)}</span>
-      `;
-      listaCarrito.appendChild(li);
+      let ubicacionTexto = "Recoge en tienda";
+      let mapsUrl = "";
+
+      if (tipoEntrega === 'Entrega a domicilio') {
+        const lat = document.getElementById('lat').value;
+        const lng = document.getElementById('lng').value;
+        mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        ubicacionTexto = `A domicilio\n📍 Ubicación: ${mapsUrl}`;
+      }
+
+      // Construcción del mensaje para WhatsApp
+      const mensaje = `*¡Nuevo Pedido - Dulce CHANY!* 🧁\n\n` +
+                      `👤 *Cliente:* ${cliente}\n` +
+                      `🍰 *Producto:* ${producto}\n` +
+                      `🔢 *Cantidad:* ${cantidad}\n` +
+                      `🛵 *Entrega:* ${tipoEntrega}\n` +
+                      (tipoEntrega === 'Entrega a domicilio' ? `📍 *Mapa:* ${mapsUrl}\n` : '') +
+                      (notas ? `📝 *Notas:* ${notas}\n` : '') +
+                      `\n¡Hola! Me gustaría confirmar mi compra.`;
+
+      // Redirigir a WhatsApp
+      const telefono = "7293610746"; // Asegúrate de colocar aquí tu número de teléfono con lada
+      const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+      window.open(whatsappUrl, '_blank');
     });
-
-    textoTotal.textContent = `$${total.toFixed(2)}`;
-  }
-
-  // Guardar la venta en Supabase al hacer clic
-  btnCobrar?.addEventListener('click', async () => {
-    btnCobrar.disabled = true;
-    btnCobrar.textContent = 'Registrando...';
-
-    const totalVenta = carrito.reduce((acc: number, item: ItemCarrito) => acc + item.precio * item.cantidad, 0);
-    const metodoPago = selectMetodo.value;
-
-    try {
-      // 1. Insertar en la tabla 'ventas'
-      const { data: venta, error: errorVenta } = await supabase
-        .from('ventas')
-        .insert([{ total: totalVenta, metodo_pago: metodoPago }])
-        .select()
-        .single();
-
-      if (errorVenta) throw errorVenta;
-
-      // 2. Insertar los detalles en 'detalle_ventas'
-      const detalles = carrito.map((item: ItemCarrito) => ({
-        venta_id: venta.id,
-        producto_id: item.id,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio,
-      }));
-
-      const { error: errorDetalle } = await supabase.from('detalle_ventas').insert(detalles);
-
-      if (errorDetalle) throw errorDetalle;
-
-      alert('¡Venta registrada con éxito!');
-      carrito = [];
-      actualizarVista();
-    } catch (err: any) {
-      alert('Error al registrar la venta: ' + err.message);
-    } finally {
-      btnCobrar.textContent = 'Confirmar y Registrar Venta';
-    }
-  });
-</script>
+  </script>
+</Layout>

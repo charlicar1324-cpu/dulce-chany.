@@ -3,35 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { supabase } from '../lib/supabase';
 
-// Consulta para obtener los productos activos desde Supabase
-const { data: productos, error } = await supabase
-  .from('productos')
-  .select('*')
-  .order('id');
-
-if (error) {
-  console.error('Error cargando productos:', error.message);
-}
+// Traer productos desde la base de datos de Supabase
+const { data: productos, error } = await supabase.from('productos').select('*');
 ---
 
-<Layout title="Dulce CHANY | Repostería Artesanal">
+<Layout title="Dulce CHANY | No elijas entre dulce o salado, ¡pídelo todo!">
   <main class="max-w-6xl mx-auto px-4 py-8">
-    <!-- Encabezado con Botón a Registro de Ventas -->
-    <header class="flex flex-col sm:flex-row justify-between items-center pb-8 border-b border-gray-100 gap-4">
+    <header class="flex flex-col sm:flex-row justify-between items-center pb-8 border-b border-pink-200 gap-4">
       <div>
-        <h1 class="text-4xl font-extrabold text-pink-600 tracking-tight">Dulce CHANY</h1>
-        <p class="text-gray-500 text-sm mt-1">Repostería Artesanal & Antojitos</p>
+        <h1 class="text-4xl font-extrabold text-pink-600 font-serif tracking-wide">Dulce CHANY</h1>
+        <p class="text-sm text-gray-500 mt-1 font-sans">Repostería Artesanal & Antojitos</p>
       </div>
 
-      <!-- Botón de acceso directo al Panel de Ventas -->
+      <!-- Botón actualizado: Registro de compra -->
       <a 
         href="/ventas" 
-        class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition duration-200"
+        class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all text-sm uppercase tracking-wider"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
         </svg>
-        <span>Registrar Ventas</span>
+        <span>Registro de compra</span>
       </a>
     </header>
 
@@ -39,20 +31,37 @@ if (error) {
     <section class="mt-10">
       <h2 class="text-2xl font-bold text-gray-800 mb-6">Nuestro Menú</h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {productos && productos.map((producto) => (
-          <ProductCard 
-            id={String(producto.id)}
-            nombre={producto.nombre}
-            descripcion={producto.descripcion}
-            precio={producto.precio}
-            categoria={producto.categoria}
-            imagen={producto.imagen}
-            popular={producto.popular}
-            disponible={producto.disponible}
-          />
-        ))}
-      </div>
+      {error ? (
+        <div class="p-4 bg-red-100 text-red-700 rounded-lg">
+          Error al cargar el menú: {error.message}
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {productos?.map((producto) => (
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 flex flex-col justify-between">
+              <div>
+                <img src={producto.imagen} alt={producto.nombre} class="w-full h-48 object-cover" />
+                <div class="p-5">
+                  <span class="inline-block px-2.5 py-1 text-xs font-semibold bg-pink-100 text-pink-700 rounded-full mb-2">
+                    {producto.categoria}
+                  </span>
+                  <h3 class="text-lg font-bold text-gray-900">{producto.nombre}</h3>
+                  <p class="text-sm text-gray-600 mt-1">{producto.descripcion}</p>
+                </div>
+              </div>
+              <div class="p-5 pt-0 flex items-center justify-between">
+                <span class="text-xl font-extrabold text-pink-600">${producto.precio.toFixed(2)}</span>
+                <a 
+                  href="/ventas" 
+                  class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-xl text-sm transition-colors"
+                >
+                  Pedir
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   </main>
 </Layout>
